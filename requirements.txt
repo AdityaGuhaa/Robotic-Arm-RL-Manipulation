@@ -1,0 +1,39 @@
+# Python 3.10 ONLY
+
+numpy==1.26.4
+scipy
+matplotlib
+pandas
+seaborn
+tqdm
+pyyaml
+imageio
+cloudpickle
+rich
+tyro
+
+# MuJoCo + Gym
+mujoco==2.3.7
+gymnasium==0.29.1
+gymnasium[mujoco]==0.29.1
+
+# RL
+stable-baselines3==2.4.1
+sb3-contrib==2.4.1
+
+# Deep learning
+torch==2.2.2
+torchvision
+torchaudio
+
+# Vision
+opencv-python==4.8.1.78
+
+# Dev
+ipython
+jupyter
+notebook
+
+# Optional (research)
+jax
+jaxlib
