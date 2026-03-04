@@ -1,0 +1,42 @@
+name: robotics
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip
+  - numpy=1.26.4
+  - scipy
+  - matplotlib
+  - pandas
+  - seaborn
+  - tqdm
+  - pyyaml
+  - ipython
+  - jupyter
+  - notebook
+
+  - pip:
+      # Core physics + RL
+      - mujoco==2.3.7
+      - gymnasium==0.29.1
+      - gymnasium[mujoco]==0.29.1
+      - stable-baselines3==2.4.1
+      - sb3-contrib==2.4.1
+
+      # Deep learning
+      - torch==2.2.2
+      - torchvision
+      - torchaudio
+
+      # Vision & utilities
+      - opencv-python==4.8.1.78
+      - imageio
+      - cloudpickle
+      - rich
+      - tyro
+
+      # Optional research stack
+      - jax
+      - jaxlib
