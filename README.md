@@ -6,14 +6,10 @@ The goal of this project is to build a clear and modular pipeline for robot lear
 
 The project includes:
 
-MuJoCo simulation environment for the Panda robot
-
-Custom Gym-style environments for robotic manipulation tasks
-
-Reinforcement learning training using Stable-Baselines3
-
-Modular code structure for experimentation and research
-
-Progressive tasks such as reaching, grasping, and pick-and-place
+1. MuJoCo simulation environment for the Panda robot
+2. Custom Gym-style environments for robotic manipulation tasks
+3. Reinforcement learning training using Stable-Baselines3
+4. Modular code structure for experimentation and research
+5. Progressive tasks such as reaching, grasping, and pick-and-place
 
 This repository serves as a learning platform for robotic manipulation, control, and reinforcement learning, and documents the development process step by step.
