@@ -1,3 +1,9 @@
+# Copyright (c) 2026 Aditya Guha. All rights reserved.
+# This source code is proprietary and may not be used, copied, modified,
+# or distributed without prior written permission. See LICENSE for details.
+#
+# OS Requirement: macOS (Apple Silicon / Intel compatible)
+#
 name: arm
 channels:
   - conda-forge
