@@ -1,15 +1,68 @@
-<img width="3840" height="2160" alt="panda" src="https://github.com/user-attachments/assets/ac091b06-14e7-4536-b164-b2f83f6aedf2" />
+<div align="center">
+  <img width="100%" alt="Franka Emika Panda Simulation" src="https://github.com/user-attachments/assets/ac091b06-14e7-4536-b164-b2f83f6aedf2" />
+  <h1>Robotic Arm RL Manipulation</h1>
+  <p><em>A representational showcase of reinforcement learning-based robotic manipulation using the Franka Emika Panda arm in MuJoCo.</em></p>
+</div>
 
-This repository contains a robotics simulation project focused on learning robotic manipulation using reinforcement learning. The project uses the Franka Emika Panda robotic arm in the MuJoCo physics simulator to develop and train agents capable of performing manipulation tasks such as reaching, grasping, and pick-and-place.
+---
 
-The goal of this project is to build a clear and modular pipeline for robot learning in simulation, starting from basic robot control and gradually progressing toward reinforcement learning based manipulation.
+## 📖 Overview
 
-The project includes:
+This repository contains a state-of-the-art robotics simulation project focused on teaching a 7-DOF robotic arm complex manipulation tasks using deep reinforcement learning. By leveraging the high-performance **MuJoCo** physics engine and **Stable-Baselines3**, this project demonstrates a modular, scalable pipeline for continuous control in robotics.
 
-1. MuJoCo simulation environment for the Panda robot
-2. Custom Gym-style environments for robotic manipulation tasks
-3. Reinforcement learning training using Stable-Baselines3
-4. Modular code structure for experimentation and research
-5. Progressive tasks such as reaching, grasping, and pick-and-place
+The project systematically progresses from fundamental robot kinematics and teleoperation to autonomous, policy-driven behaviors like reaching, grasping, and pick-and-place operations.
 
-This repository serves as a learning platform for robotic manipulation, control, and reinforcement learning, and documents the development process step by step.
+> [!NOTE]
+> **🚧 Current Status: Model Training in Progress**
+> The reinforcement learning agents (PPO) are currently undergoing active training. Evaluation metrics and final trained model weights will be updated once the training cycles are complete and convergence is achieved.
+
+## ✨ Key Features
+
+- **High-Fidelity Simulation**: Utilizes MuJoCo for fast, accurate physics simulation of the Franka Emika Panda robotic arm.
+- **Custom Gymnasium Environments**: Implements fully custom, OpenAI Gym-compliant (`gymnasium`) environments for granular control over states, rewards, and episodes.
+- **Deep Reinforcement Learning**: Integrates `Stable-Baselines3` to train robust Proximal Policy Optimization (PPO) agents for continuous action spaces.
+- **Interactive Teleoperation**: Includes a real-time keyboard teleoperation script to manually control end-effector kinematics, facilitating debugging and intuition-building for reward shaping.
+- **Modular Architecture**: Clean separation of concerns between environment definitions, training logic, evaluation, and simulation assets.
+
+## 🏗️ Project Architecture
+
+```text
+Robotic-Arm-RL-Manipulation/
+├── envs/                     # Custom Gymnasium environments
+│   ├── reach_env.py          # Reaching task environment
+│   └── pick_place_env.py     # Pick-and-place task environment (WIP)
+├── franka_emika_panda/       # MuJoCo assets (MJCF XMLs, meshes, textures)
+├── scripts/                  # Utilities and debugging tools
+│   ├── teleop_robot.py       # Interactive keyboard teleoperation
+│   └── test_robot.py         # Basic simulation loop testing
+├── train/                    # RL Training pipeline
+│   └── train_rl.py           # PPO training script using SB3
+├── evaluate.py               # Model evaluation and rendering script
+├── environment.yml           # Conda environment definition
+└── requirements.txt          # Python dependencies
+```
+
+## 🚀 Execution Pipeline
+
+Although this codebase is proprietary and not licensed for external use, the internal execution pipeline operates as follows:
+
+1. **Environment Setup**: 
+   Dependencies are managed via `conda` and `pip` (MuJoCo, Gymnasium, Stable-Baselines3).
+2. **Teleoperation & Verification**: 
+   `python scripts/teleop_robot.py` allows manual verification of physics, collision boundaries, and joint limits.
+3. **Training Phase**: 
+   `python train/train_rl.py` initializes the PPO agent and begins interaction with the custom `PandaReach-v0` environment. *(Currently in progress)*
+4. **Evaluation Phase**: 
+   `python evaluate.py` loads the best-performing model checkpoints to visualize the learned policy and calculate success rates.
+
+---
+
+## ⚠️ License & Legal Notice
+
+**© 2026 Aditya Guha. All rights reserved.**
+
+This project is provided **for viewing and representational purposes only**. No permission is granted to use, copy, modify, distribute, or create derivative works from any part of this repository — including source code, documentation, models, and any other materials — for **any purpose**, whether commercial, academic, personal, or otherwise.
+
+Unauthorized use may result in legal action under applicable intellectual property laws.
+
+See the full [LICENSE](./LICENSE) file for details.
