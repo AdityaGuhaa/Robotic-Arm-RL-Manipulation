@@ -42,6 +42,21 @@ Robotic-Arm-RL-Manipulation/
 └── requirements.txt          # Python dependencies
 ```
 
+## ⚙️ System Requirements & Prerequisites
+
+The codebase is engineered and tested under the following environment:
+
+- **Operating System**: macOS (Apple Silicon / Intel compatible)
+- **Python**: Version 3.10
+- **Core Dependencies**:
+  - `mujoco >= 3.0.0`
+  - `gymnasium[mujoco] == 0.29.1`
+  - `stable-baselines3 == 2.4.1`
+  - `torch >= 2.2.0`
+  - `numpy == 1.26.4`
+
+A comprehensive dependency list is maintained in both `requirements.txt` and `environment.yml` for reproducible environment setups (e.g., via `conda`).
+
 ## 🚀 Execution Pipeline
 
 Although this codebase is proprietary and not licensed for external use, the internal execution pipeline operates as follows:
