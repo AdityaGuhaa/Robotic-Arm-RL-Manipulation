@@ -156,6 +156,14 @@ def create_env(env_id="PandaReach-v0", render=False, record=False, record_dir="e
         render_mode = "rgb_array"
 
     env = gymnasium.make(env_id, render_mode=render_mode)
+    
+    # Check if we should load vec_normalize
+    if os.path.exists("models/vec_normalize.pkl"):
+        from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+        env = DummyVecEnv([lambda: env])
+        env = VecNormalize.load("models/vec_normalize.pkl", env)
+        env.training = False
+        env.norm_reward = False
 
     if record:
         from gymnasium.wrappers import RecordVideo
@@ -193,18 +201,32 @@ def evaluate(model, env, n_episodes: int = 100,
     successes = []
 
     for ep in range(n_episodes):
-        obs, info = env.reset()
+        obs = env.reset()
+        if isinstance(obs, tuple):
+            obs, _ = obs # Handle both VecEnv and regular gym envs
+
         done = False
-        truncated = False
         total_reward = 0.0
         steps = 0
 
-        while not (done or truncated):
+        while not done:
             action, _ = model.predict(obs, deterministic=deterministic)
-            obs, reward, done, truncated, info = env.step(action)
+            step_ret = env.step(action)
             
+            # Handle VecEnv vs regular gym env
+            if len(step_ret) == 4:
+                obs, reward, done_flags, info_list = step_ret
+                done = done_flags[0]
+                reward = reward[0]
+                info = info_list[0]
+            else:
+                obs, reward, done, truncated, info = step_ret
+                done = done or truncated
+
             # Add delay when rendering so it plays at real-time speed (~50 Hz)
-            if env.render_mode == "human":
+            if hasattr(env, "render_mode") and env.render_mode == "human":
+                time.sleep(0.02)
+            elif hasattr(env, "venv") and env.venv.envs[0].render_mode == "human":
                 time.sleep(0.02)
                 
             total_reward += reward
@@ -308,7 +330,10 @@ def main():
 
     # Seed
     if args.seed is not None:
-        env.reset(seed=args.seed)
+        try:
+            env.seed(args.seed)
+        except AttributeError:
+            pass
         np.random.seed(args.seed)
 
     print(f"  Episodes  : {args.n_episodes}")
