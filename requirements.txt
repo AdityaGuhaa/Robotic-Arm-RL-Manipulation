@@ -24,7 +24,7 @@ gymnasium[mujoco]==0.29.1
 
 # RL
 stable-baselines3==2.4.1
-sb3-contrib==2.4.1
+sb3-contrib==2.4.0
 tensorboard
 
 # Deep learning

@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="100%" alt="Franka Emika Panda Simulation" src="https://github.com/user-attachments/assets/ac091b06-14e7-4536-b164-b2f83f6aedf2" />
+  <img width="100%" alt="Franka Emika Panda Simulation" src="assets/panda_reach_demo.gif" />
   <h1>Robotic Arm RL Manipulation</h1>
   <p><em>A representational showcase of reinforcement learning-based robotic manipulation using the Franka Emika Panda arm in MuJoCo.</em></p>
 </div>
@@ -13,8 +13,8 @@ This repository contains a state-of-the-art robotics simulation project focused 
 The project systematically progresses from fundamental robot kinematics and teleoperation to autonomous, policy-driven behaviors like reaching, grasping, and pick-and-place operations.
 
 > [!NOTE]
-> **🚧 Current Status: Model Training in Progress**
-> The reinforcement learning agents (PPO) are currently undergoing active training. Evaluation metrics and final trained model weights will be updated once the training cycles are complete and convergence is achieved.
+> **✅ Current Status: Model Training Complete (v2)**
+> The reinforcement learning agents (PPO) have been successfully trained on the reaching task with a 100% success rate. The agent utilizes orientation penalties, smoothness penalties, and curriculum learning for natural and robust trajectories. Evaluation metrics and pre-trained model weights are available in the repository.
 
 ## ✨ Key Features
 

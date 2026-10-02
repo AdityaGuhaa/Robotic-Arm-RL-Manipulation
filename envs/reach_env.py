@@ -6,20 +6,28 @@
 PandaReachEnv — Gymnasium environment for the Franka Panda reach task.
 
 The agent must move the robot's end-effector to a randomly placed target
-position in 3-D space.
+position in 3-D space with correct downward-facing orientation.
 
-Observation (20-dim):
-    joint_pos (7) + joint_vel (7) + ee_pos (3) + target_pos (3)
+Observation (23-dim):
+    joint_pos (7) + joint_vel (7) + ee_pos (3) + ee_z_axis (3) + target_pos (3)
 
 Action (7-dim):
     Normalised delta joint-position commands for the 7 arm joints,
     scaled by ``action_scale`` rad and added to the current actuator ctrl.
 
-Reward:
-    Dense: −distance(EE, target) + bonus on success.
+Reward (dense, multi-component):
+    - Position:    −distance(EE, target)
+    - Orientation: −orientation_weight * (1 − cos_angle) when EE z-axis
+                    deviates from pointing downward (−Z).
+    - Smoothness:  −smoothness_weight * ||action − prev_action||
+    - Bonus:       +10 on success (EE within ``success_threshold`` of target).
 
 Success:
     End-effector within ``success_threshold`` metres of the target.
+
+Curriculum:
+    Target workspace starts small (near centre) and expands over
+    ``curriculum_warmup`` episodes to the full reachable volume.
 """
 
 import os
@@ -32,7 +40,8 @@ from gymnasium import spaces
 
 
 class PandaReachEnv(gym.Env):
-    """Franka Panda reach-to-target environment."""
+    """Franka Panda reach-to-target environment with orientation,
+    smoothness, and curriculum-learning enhancements."""
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 25}
 
@@ -43,6 +52,12 @@ class PandaReachEnv(gym.Env):
         action_scale: float = 0.05,
         success_threshold: float = 0.05,
         n_substeps: int = 20,
+        # ── Reward shaping weights ──────────────────────────────
+        orientation_weight: float = 0.3,
+        smoothness_weight: float = 0.05,
+        # ── Curriculum learning ─────────────────────────────────
+        curriculum: bool = True,
+        curriculum_warmup: int = 300,
     ):
         super().__init__()
 
@@ -51,6 +66,14 @@ class PandaReachEnv(gym.Env):
         self.action_scale = action_scale
         self.success_threshold = success_threshold
         self.n_substeps = n_substeps
+
+        # Reward weights
+        self.orientation_weight = orientation_weight
+        self.smoothness_weight = smoothness_weight
+
+        # Curriculum
+        self.curriculum = curriculum
+        self.curriculum_warmup = curriculum_warmup
 
         # ── Load MuJoCo model ────────────────────────────────────
         xml_path = os.path.join(
@@ -78,17 +101,27 @@ class PandaReachEnv(gym.Env):
         self.action_space = spaces.Box(
             low=-1.0, high=1.0, shape=(self.n_actions,), dtype=np.float32,
         )
-        #  joint_pos(7) + joint_vel(7) + ee_pos(3) + target_pos(3) = 20
+        #  joint_pos(7) + joint_vel(7) + ee_pos(3) + ee_z_axis(3)
+        #  + target_pos(3) = 23
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(20,), dtype=np.float64,
+            low=-np.inf, high=np.inf, shape=(23,), dtype=np.float64,
         )
 
-        # ── Target workspace (reachable volume around the arm) ──
-        self._target_low = np.array([0.3, -0.3, 0.2])
-        self._target_high = np.array([0.7, 0.3, 0.6])
+        # ── Target workspace — tightened to verified reachable volume ──
+        self._target_low = np.array([0.30, -0.25, 0.25])
+        self._target_high = np.array([0.65,  0.25, 0.55])
+
+        # ── Curriculum bounds (gradually expand from easy → full) ──
+        self._curriculum_center = np.array([0.48, 0.0, 0.40])
+        self._curriculum_min_half = np.array([0.05, 0.05, 0.05])
+        self._curriculum_max_half = (
+            (self._target_high - self._target_low) / 2.0
+        )
 
         # ── Internal state ───────────────────────────────────────
         self._step_count = 0
+        self._total_episodes = 0
+        self._prev_action = np.zeros(self.n_actions, dtype=np.float64)
         self._viewer = None
         self._renderer = None
 
@@ -102,14 +135,18 @@ class PandaReachEnv(gym.Env):
         # Reset to home keyframe
         mujoco.mj_resetDataKeyframe(self.model, self.data, self._home_key_id)
 
-        # Randomise target position
-        target_pos = self.np_random.uniform(self._target_low, self._target_high)
+        # Randomise target position (with curriculum)
+        target_low, target_high = self._get_target_bounds()
+        target_pos = self.np_random.uniform(target_low, target_high)
         self.data.mocap_pos[0] = target_pos
 
         # Forward kinematics so that xpos is up-to-date
         mujoco.mj_forward(self.model, self.data)
 
         self._step_count = 0
+        self._prev_action = np.zeros(self.n_actions, dtype=np.float64)
+        self._total_episodes += 1
+
         return self._get_obs(), self._get_info()
 
     def step(self, action):
@@ -135,14 +172,32 @@ class PandaReachEnv(gym.Env):
         obs = self._get_obs()
         info = self._get_info()
 
-        # Reward
+        # ── Multi-component reward ───────────────────────────────
         distance = info["distance"]
+        orientation_error = info["orientation_error"]
+
+        # 1) Position: negative distance to target
         reward = -distance
+
+        # 2) Orientation: penalise EE z-axis deviating from −Z (downward)
+        reward -= self.orientation_weight * orientation_error
+
+        # 3) Smoothness: penalise jerky action changes
+        action_delta = float(np.linalg.norm(action - self._prev_action))
+        reward -= self.smoothness_weight * action_delta
+
+        # 4) Success bonus
         success = distance < self.success_threshold
         if success:
-            reward += 10.0
+            # Larger bonus for arriving with good orientation
+            orientation_bonus = max(0.0, 2.0 - orientation_error)
+            reward += 10.0 + orientation_bonus
 
         info["is_success"] = success
+        info["action_delta"] = action_delta
+
+        # Store action for next smoothness calculation
+        self._prev_action = action.copy()
 
         terminated = success
         truncated = self._step_count >= self.max_episode_steps
@@ -181,16 +236,51 @@ class PandaReachEnv(gym.Env):
     # Helpers
     # ==================================================================
 
+    def _get_ee_z_axis(self) -> np.ndarray:
+        """Return the z-axis direction of the end-effector frame (3-dim).
+
+        The rotation matrix is stored row-major in ``data.xmat``; the
+        z-axis is the third column (indices 2, 5, 8 of the flat array).
+        """
+        xmat = self.data.xmat[self._hand_body_id].reshape(3, 3)
+        return xmat[:, 2].copy()
+
     def _get_obs(self) -> np.ndarray:
-        """Build the 20-dim observation vector."""
+        """Build the 23-dim observation vector."""
         joint_pos = self.data.qpos[: self.n_arm_joints].copy()
         joint_vel = self.data.qvel[: self.n_arm_joints].copy()
         ee_pos = self.data.xpos[self._hand_body_id].copy()
+        ee_z_axis = self._get_ee_z_axis()
         target_pos = self.data.mocap_pos[0].copy()
-        return np.concatenate([joint_pos, joint_vel, ee_pos, target_pos])
+        return np.concatenate([joint_pos, joint_vel, ee_pos, ee_z_axis,
+                               target_pos])
 
     def _get_info(self) -> dict:
         ee_pos = self.data.xpos[self._hand_body_id]
         target_pos = self.data.mocap_pos[0]
         distance = float(np.linalg.norm(ee_pos - target_pos))
-        return {"distance": distance}
+
+        # Orientation error: 0 when EE z-axis == −Z, 2 when opposite
+        ee_z = self._get_ee_z_axis()
+        desired_z = np.array([0.0, 0.0, -1.0])
+        orientation_error = float(1.0 - np.dot(ee_z, desired_z))
+
+        return {
+            "distance": distance,
+            "orientation_error": orientation_error,
+        }
+
+    def _get_target_bounds(self):
+        """Return (low, high) target-position bounds, optionally applying
+        curriculum expansion based on total episode count."""
+        if not self.curriculum:
+            return self._target_low.copy(), self._target_high.copy()
+
+        progress = min(1.0, self._total_episodes / self.curriculum_warmup)
+        half = (
+            self._curriculum_min_half
+            + progress * (self._curriculum_max_half - self._curriculum_min_half)
+        )
+        low = np.maximum(self._target_low, self._curriculum_center - half)
+        high = np.minimum(self._target_high, self._curriculum_center + half)
+        return low, high
