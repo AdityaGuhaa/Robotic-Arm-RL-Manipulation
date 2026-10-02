@@ -80,6 +80,16 @@ A comprehensive architectural revision of the environment and training hyperpara
 
 ---
 
+## Hardware and Compute Infrastructure
+
+The Version 2 policy was trained utilizing a heterogeneous compute setup to maximize rollout throughput and gradient update efficiency:
+
+- **Hardware Specifications**: The training pipeline was executed on a Linux workstation equipped with a **16-core CPU** and an **NVIDIA GeForce RTX 4050 (6GB VRAM)** GPU.
+- **CPU Utilization (Environment Rollouts)**: Due to the high-throughput nature of the MuJoCo physics engine, environment stepping is heavily CPU-bound. The 16 CPU cores were utilized to run 16 independent instances of the environment in parallel via `SubprocVecEnv`. This parallelization effectively decoupled the physics simulation from the neural network updates, generating large, diverse batches of state transitions rapidly.
+- **GPU Utilization (Policy Optimization)**: The RTX 4050 was utilized strictly for the forward and backward passes of the PPO actor-critic networks during the gradient update phases. While MLP-based continuous control policies do not heavily saturate GPU compute compared to CNN-based pixel policies, the GPU acceleration combined with large batch sizes (2048) and deep network architectures `[512, 256, 128]` reduced the optimization step latency. This hardware synergy allowed the full 2,000,000 timestep training regime to complete in approximately 7 minutes.
+
+---
+
 ## System Requirements and Prerequisites
 
 The execution pipeline has been engineered and validated under the following configuration:
