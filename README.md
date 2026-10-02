@@ -1,100 +1,152 @@
 <div align="center">
   <img width="100%" alt="Franka Emika Panda Simulation" src="assets/panda_reach_demo.gif" />
   <h1>Robotic Arm RL Manipulation</h1>
-  <p><em>Reinforcement learning-based continuous control of a 7-DOF Franka Emika Panda manipulator in MuJoCo.</em></p>
+  <p><em>A state-of-the-art showcase of reinforcement learning-based robotic manipulation using the Franka Emika Panda arm in MuJoCo.</em></p>
 </div>
 
 ---
 
-## Overview
+## 📖 Overview
 
-This repository provides a modular pipeline for training continuous control policies on a 7-Degree-of-Freedom (7-DOF) Franka Emika Panda robotic arm using Deep Reinforcement Learning (DRL). Leveraging the MuJoCo physics engine and Stable-Baselines3, the project demonstrates scalable approaches to complex manipulation tasks, beginning with a dense-reward reach-to-target objective.
+This repository contains a high-fidelity robotics simulation project focused on teaching a 7-DOF robotic arm complex manipulation tasks using deep reinforcement learning. By leveraging the **MuJoCo** physics engine and **Stable-Baselines3**, this project demonstrates a modular, scalable pipeline for continuous control in robotics.
 
-The architecture isolates environment definitions, training logic, and evaluation utilities, providing a foundation for scalable robotics research involving high-fidelity simulation and advanced policy optimization techniques.
+The project is currently focused on the **Reaching Task** but systematically builds the foundation for autonomous, policy-driven behaviors like grasping and pick-and-place operations.
 
-> **Current Status: Model Training Complete (v2)**
-> Proximal Policy Optimization (PPO) agents have been successfully trained on the reaching task, achieving a 100% success rate. The current policy incorporates strict orientation constraints, smoothness penalties, and curriculum learning to produce natural, robust end-effector trajectories.
-
-## Technical Architecture
-
-### 1. Custom Gymnasium Environment (`PandaReach-v2`)
-
-The core of the simulation is a fully custom, Gymnasium-compliant environment (`envs/reach_env.py`) that interfaces directly with MuJoCo's C-bindings for maximal throughput.
-
-- **State Space (23-dim)**: Includes joint positions (7), joint velocities (7), end-effector position (3), end-effector Z-axis orientation (3), and target spatial coordinates (3).
-- **Action Space (7-dim)**: Continuous, bounded $[-1.0, 1.0]$. The policy outputs normalized delta joint-position commands, which are scaled and applied to the robot's actuators.
-- **Reward Function**: A dense, multi-objective formulation:
-  - *Position Penalty*: Euclidean distance between the end-effector and the target.
-  - *Orientation Penalty*: Cosine similarity-based penalty enforcing a strict downward-facing $(-Z)$ end-effector orientation.
-  - *Smoothness Penalty*: L2-norm of the action derivative ($\Delta a$) to prevent jerky trajectories.
-  - *Success Bonus*: +10 terminal reward (plus an orientation alignment bonus) when the end-effector falls within the success threshold (0.05m).
-- **Curriculum Learning**: The target sampling volume begins constrained to a centralized sub-volume and linearly expands to the full reachable workspace over the initial warmup episodes.
-
-### 2. Reinforcement Learning Pipeline
-
-The training pipeline (`train/train_rl.py`) employs Stable-Baselines3 to optimize a PPO agent.
-
-- **Algorithm**: Proximal Policy Optimization (PPO) with Generalized Advantage Estimation (GAE).
-- **Network Architecture**: Custom Multi-Layer Perceptron (MLP) featuring a `[512, 256, 128]` hidden layer structure with `Tanh` activations for both the policy and value networks.
-- **Parallelization**: Utilizes `SubprocVecEnv` for asynchronous, multi-process environment stepping.
-- **Normalization**: Incorporates `VecNormalize` to dynamically scale observations and rewards, improving gradient stability.
-- **Optimization Strategy**: Employs a linear learning rate decay schedule starting from $3 \times 10^{-4}$.
-
-## Repository Structure
-
-```text
-Robotic-Arm-RL-Manipulation/
-├── envs/                     # Custom Gymnasium environments
-│   ├── reach_env.py          # Reach-to-target task environment (PandaReach-v2)
-│   └── pick_place_env.py     # Pick-and-place task environment (WIP)
-├── franka_emika_panda/       # MuJoCo assets (MJCF XMLs, meshes, materials)
-├── scripts/                  # Diagnostics and debugging utilities
-│   ├── teleop_robot.py       # Real-time keyboard teleoperation
-│   └── test_robot.py         # Simulation step verification
-├── train/                    # RL Training pipeline
-│   └── train_rl.py           # PPO training execution script
-├── evaluate.py               # Checkpoint evaluation and rendering
-├── environment.yml           # Conda environment specification
-└── requirements.txt          # Pip dependencies
-```
-
-## System Requirements
-
-The framework is validated under the following configuration:
-
-- **OS**: macOS (Apple Silicon / Intel compatible)
-- **Python**: 3.10
-- **Dependencies**:
-  - `mujoco >= 3.0.0`
-  - `gymnasium[mujoco] == 0.29.1`
-  - `stable-baselines3 == 2.4.1`
-  - `torch >= 2.2.0`
-  - `numpy == 1.26.4`
-
-Dependencies can be installed via the provided `environment.yml` (for Conda) or `requirements.txt` (for pip).
-
-## Execution Pipeline
-
-This codebase is proprietary. For reference, the internal pipeline is structured as follows:
-
-1. **Diagnostics (Teleoperation)**: 
-   `python scripts/teleop_robot.py`
-   Interactive validation of MuJoCo physics, joint limits, and collision meshes prior to RL training.
-
-2. **Policy Optimization**: 
-   `python train/train_rl.py --timesteps 2000000 --n-envs 16`
-   Initializes the PPO agent, configuring the multi-process vector environment and initiating the optimization loop.
-
-3. **Inference & Evaluation**: 
-   `python evaluate.py`
-   Restores the optimal checkpoint and evaluates the policy, rendering the resulting trajectories for qualitative analysis.
+> [!NOTE]
+> **✅ Current Status: Model Training Complete (v2)**
+> The PPO agent has been successfully trained on the reaching task with a **100% success rate**. The agent utilizes orientation penalties, action smoothness penalties, and curriculum learning for natural and robust trajectories.
 
 ---
 
-## License & Legal Notice
+## ✨ Key Features & Architecture
 
-**Copyright (c) 2026 Aditya Guha. All rights reserved.**
+- **High-Fidelity Simulation**: Utilizes MuJoCo for fast, accurate physics simulation of the Franka Emika Panda robotic arm.
+- **Custom Gymnasium Environments**: Fully custom, OpenAI Gym-compliant (`gymnasium`) environments providing granular control over states, multi-component dense rewards, and episodes.
+- **Deep Reinforcement Learning**: Integrates `Stable-Baselines3` to train robust Proximal Policy Optimization (PPO) agents for continuous action spaces.
+- **Curriculum Learning**: Progressively scales task difficulty by expanding the target workspace volume dynamically during early training episodes.
+- **Modular Architecture**: Clean separation of concerns between environment definitions, training logic, evaluation, and simulation assets.
+
+### Directory Structure
+```text
+Robotic-Arm-RL-Manipulation/
+├── envs/                     # Custom Gymnasium environments
+│   ├── reach_env.py          # Reaching task environment (v2)
+│   └── __init__.py           # Gym environment registrations
+├── franka_emika_panda/       # MuJoCo assets (MJCF XMLs, meshes, textures)
+├── scripts/                  # Utilities and debugging tools
+│   └── teleop_robot.py       # Interactive keyboard teleoperation
+├── train/                    # RL Training pipeline
+│   └── train_rl.py           # PPO training script using SB3
+├── evaluate.py               # Model evaluation and rendering script
+├── environment.yml           # Conda environment definition
+└── requirements.txt          # Python dependencies
+```
+
+---
+
+## 🚀 Version History & Technical Progression
+
+### Version 1: The Baseline Reach (Deprecated)
+The initial prototype established the foundational RL pipeline and `PandaReach-v0` environment.
+
+- **State Space (20-dim)**: 7 joint positions, 7 joint velocities, 3 end-effector (EE) Cartesian coordinates, 3 target Cartesian coordinates.
+- **Action Space (7-dim)**: Normalized delta joint-position commands.
+- **Reward Function**: Dense Cartesian distance penalty (`-distance`) + sparse success bonus (`+10`).
+- **Results**: Achieved a ~90% success rate across 500k timesteps using a standard `[256, 256]` MLP policy.
+- **Limitations**: The agent learned to reach the target but exhibited jerky, abrupt joint-level movements. It also arrived at the target with uncontrolled gripper orientation (often sideways or upside-down), which is problematic for future grasping tasks. Some boundary targets resulted in unreachable failure cases.
+
+### Version 2: The Enhanced Agent (Latest)
+A complete overhaul of the environment and training pipeline addressing all v1 limitations. The agent now moves fluidly and aligns perfectly for grasping.
+
+- **State Space Expanded (23-dim)**: Introduced the EE z-axis directional vector (3-dim) to allow the agent to perceive its orientation relative to the target.
+- **Multi-Component Reward Shaping**:
+  - **Orientation Penalty**: Penalizes the EE z-axis deviating from the downward vector (`-Z`), forcing the gripper to approach the target from above.
+  - **Smoothness Penalty**: Penalizes large changes between consecutive actions (`||action - prev_action||`), resulting in fluid, natural trajectories.
+  - **Orientation Bonus**: The success bonus is scaled by the final orientation quality.
+- **Curriculum Learning**: The target spawn volume starts strictly constrained to the center of the workspace and dynamically expands over the first 300 episodes, ensuring the agent learns baseline reaching before attempting edge cases.
+- **Tightened Workspace Bounds**: Eliminated mechanically unreachable edge cases.
+- **Aggressive Training Pipeline (`train_rl.py`)**:
+  - Scaled up to **2,000,000 timesteps** across **16 parallel environments**.
+  - **Deepened Network**: `[512, 256, 128]` hidden layers with `Tanh` activations.
+  - **Hyperparameters**: Applied linear learning rate decay (`3e-4 → 0`), large rollout buffers (`4096` steps/env), large batch sizes (`2048`), and an entropy coefficient (`0.005`) for exploration.
+  - **VecNormalize**: Implemented running standard normalization for observations and rewards.
+- **Results**: **100% success rate**. Trajectory length reduced by 2x (averaging ~6-8 steps). Highly accurate value function (`0.981` explained variance).
+
+---
+
+## ⚙️ System Requirements & Prerequisites
+
+The codebase is engineered and tested under the following environment:
+
+- **Operating System**: Linux / macOS
+- **Python**: Version 3.10
+- **Core Dependencies**:
+  - `mujoco >= 3.0.0`
+  - `gymnasium[mujoco] == 0.29.1`
+  - `stable-baselines3 == 2.4.0`
+  - `torch >= 2.2.0`
+  - `numpy == 1.26.4`
+
+A comprehensive dependency list is maintained in both `requirements.txt` and `environment.yml` for reproducible environment setups via `conda`.
+
+---
+
+## 💻 Execution & Usage
+
+### 1. Environment Setup
+Create the isolated conda environment and install dependencies:
+```bash
+conda env create -f environment.yml
+conda activate robotics
+```
+
+### 2. Manual Teleoperation
+To manually verify physics, collision boundaries, and joint limits via keyboard:
+```bash
+python scripts/teleop_robot.py
+```
+
+### 3. Model Training
+Train a new PPO agent from scratch using the v2 pipeline. Model checkpoints and normalizers will be saved to `models/`.
+```bash
+python train/train_rl.py --timesteps 2000000 --n-envs 16 --device auto --normalize
+```
+
+### 4. Evaluation & Visualization
+Load the pre-trained `best_model.zip` and evaluate it using the custom evaluation script. The script automatically loads `VecNormalize` statistics.
+
+**Console evaluation (100 episodes):**
+```bash
+python evaluate.py --model-path models/best/best_model.zip --n-episodes 100
+```
+
+**Visual evaluation (Interactive MuJoCo rendering):**
+```bash
+python evaluate.py --model-path models/best/best_model.zip --render --n-episodes 10
+```
+*(Note for Wayland users on Linux: You may need to prepend `MUJOCO_GL=glx` if the viewer fails to initialize).*
+
+---
+
+## 🔮 Roadmap
+
+- [x] Integrate Franka Panda MuJoCo assets.
+- [x] Build keyboard teleoperation script.
+- [x] Design custom `Gymnasium` reaching environment.
+- [x] Train baseline PPO reaching policy.
+- [x] Overhaul environment with orientation, smoothness penalties, and curriculum learning.
+- [x] Scale up training pipeline (VecNormalize, deeper MLPs, parallel envs).
+- [ ] Implement `PickAndPlace-v0` environment (adding block manipulation).
+- [ ] Add domain randomization (friction, mass, sensor noise) for sim-to-real transferability.
+
+---
+
+## ⚠️ License & Legal Notice
+
+**© 2026 Aditya Guha. All rights reserved.**
 
 This project is provided **for viewing and representational purposes only**. No permission is granted to use, copy, modify, distribute, or create derivative works from any part of this repository — including source code, documentation, models, and any other materials — for **any purpose**, whether commercial, academic, personal, or otherwise.
 
-Unauthorized use may result in legal action under applicable intellectual property laws. See the full `LICENSE` file for details.
+Unauthorized use may result in legal action under applicable intellectual property laws.
+
+See the full [LICENSE](./LICENSE) file for details.
