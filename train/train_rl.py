@@ -107,7 +107,7 @@ def main():
 
     # ── Environments ─────────────────────────────────────────────
     train_env = make_vec_env(
-        "PandaReach-v0",
+        "PandaReach-v2",
         n_envs=args.n_envs,
         seed=args.seed,
         vec_env_cls=SubprocVecEnv,
@@ -124,7 +124,7 @@ def main():
         )
 
     eval_env = make_vec_env(
-        "PandaReach-v0",
+        "PandaReach-v2",
         n_envs=1,
         seed=args.seed + 1000,
     )

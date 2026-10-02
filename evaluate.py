@@ -46,8 +46,8 @@ def parse_args():
         help="Path to the trained SB3 model checkpoint (.zip)",
     )
     parser.add_argument(
-        "--env", type=str, default="PandaReach-v0",
-        help="Gymnasium environment ID (e.g. PandaReach-v0)",
+        "--env", type=str, default="PandaReach-v2",
+        help="Gymnasium environment ID (e.g. PandaReach-v2)",
     )
     parser.add_argument(
         "--algo", type=str, default="PPO",
@@ -128,14 +128,14 @@ def load_model(algo_name: str, model_path: str):
 # ---------------------------------------------------------------------------
 # Environment factory
 # ---------------------------------------------------------------------------
-def create_env(env_id="PandaReach-v0", render=False, record=False, record_dir="eval_videos"):
+def create_env(env_id="PandaReach-v2", render=False, record=False, record_dir="eval_videos"):
     """
     Create the evaluation environment.
 
     Parameters
     ----------
     env_id : str
-        Gymnasium environment ID (e.g. 'PandaReach-v0').
+        Gymnasium environment ID (e.g. 'PandaReach-v2').
     render : bool
         If True, launch the interactive MuJoCo viewer.
     record : bool

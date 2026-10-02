@@ -11,6 +11,6 @@ Importing this module registers all custom environments with Gymnasium.
 from gymnasium.envs.registration import register
 
 register(
-    id="PandaReach-v0",
+    id="PandaReach-v2",
     entry_point="envs.reach_env:PandaReachEnv",
 )

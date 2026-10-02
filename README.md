@@ -17,7 +17,7 @@ The architecture isolates environment definitions, training logic, and evaluatio
 
 ## Technical Architecture
 
-### 1. Custom Gymnasium Environment (`PandaReach-v0`)
+### 1. Custom Gymnasium Environment (`PandaReach-v2`)
 
 The core of the simulation is a fully custom, Gymnasium-compliant environment (`envs/reach_env.py`) that interfaces directly with MuJoCo's C-bindings for maximal throughput.
 
@@ -45,7 +45,7 @@ The training pipeline (`train/train_rl.py`) employs Stable-Baselines3 to optimiz
 ```text
 Robotic-Arm-RL-Manipulation/
 ├── envs/                     # Custom Gymnasium environments
-│   ├── reach_env.py          # Reach-to-target task environment (PandaReach-v0)
+│   ├── reach_env.py          # Reach-to-target task environment (PandaReach-v2)
 │   └── pick_place_env.py     # Pick-and-place task environment (WIP)
 ├── franka_emika_panda/       # MuJoCo assets (MJCF XMLs, meshes, materials)
 ├── scripts/                  # Diagnostics and debugging utilities
